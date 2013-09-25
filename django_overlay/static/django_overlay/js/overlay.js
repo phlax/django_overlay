@@ -8,7 +8,7 @@
 
     rscript = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
 
-    render_overlay = function (node, target, close) {
+    render_overlay = function (node, target, close, trigger, hide) {
         var pheader, pbody, pfooter, page, page_content;
 
         pheader = $('.page-header', target);
@@ -30,6 +30,17 @@
                   + '</div>'
                   + '<div class="overlay-footer"></div>');
 
+	if (trigger) {
+	    page.trigger(trigger);
+	}
+
+        page.trigger('modal-load');
+	
+	if (hide) {
+	    target.on('hidden', function () {
+		page.trigger(hide);
+	    })
+	}
     };
 
     load_overlay_link = function (clicked, options) {
@@ -88,8 +99,21 @@
 		    backdrop.hide();
 		})
 		content.html(result.find(options.content))
+
+		if (options.onload) {
+		    clicked.trigger(options.onload);
+		}
+		
+		clicked.trigger('overlay-load');
 	    })
 
+	    
+	    if (options.onhide) {
+		options.target.on('hidden', function () {
+		    options.target.trigger(options.onhide);
+		})
+	    }
+	    
             options.target.on('hidden', function () {
                 $(clicked).data('disabled', false);
                 if (options && options.done) {
@@ -136,6 +160,8 @@
                 body: this.data('overlay-body'),
 		close:  this.data('overlay-close'),
                 modal: this.data('overlay-modal'),
+		onload:  this.data('overlay-onload'),
+		onhide:  this.data('overlay-onhide'),
                 header_buttons: this.data('overlay-header-buttons'),
 		loading_message: 'Loading...'
             };
